@@ -1,0 +1,115 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql" 
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  user_id   Int     @id @default(autoincrement())
+  username  String  @unique @db.VarChar(20)
+  password  String  @db.VarChar(20)
+  email     String  @unique @db.VarChar(50)
+  phone     String  @unique @db.VarChar(20)
+  first_name String @db.VarChar(20)
+  last_name  String @db.VarChar(20)
+  address    String @db.VarChar(250)
+
+  // Relationships
+  orders    Order[]
+  shops     Shop[]
+  payments  Payment[]
+  carts     Cart[]
+}
+
+model Shop {
+  shop_id      Int    @id @default(autoincrement())
+  name         String @db.VarChar(50)
+  address      String @db.VarChar(50)
+  open_time    String @db.VarChar(20)
+  close_time   String @db.VarChar(20)
+  is_available Boolean
+  user_id      Int
+  review_id    Int?
+  meal_id      Int?
+
+  // Relationships
+  user   User    @relation(fields: [user_id], references: [user_id])
+  meals  Meal?   @relation(fields: [meal_id], references: [meal_id])
+  review Review? @relation(fields: [review_id], references: [review_id])
+}
+
+model Review {
+  review_id Int    @id @default(autoincrement())
+  star      Int
+  comment   String @db.VarChar(250)
+
+  // Relationships
+  shops Shop[]
+}
+
+model Meal {
+  meal_id  Int    @id @default(autoincrement())
+  name     String @db.VarChar(50)
+  price    Float
+  image    String @db.VarChar(100)
+  quantity Int
+
+  // Relationships
+  shops Shop[]
+  carts Cart[]
+}
+
+model Order {
+  order_id   Int      @id @default(autoincrement())
+  status     String   @db.VarChar(10)
+  created_at DateTime
+  updated_at DateTime
+  total      Float
+  user_id    Int
+  shipping_id Int
+  payment_id  Int
+
+  // Relationships
+  user     User     @relation(fields: [user_id], references: [user_id])
+  shipping Shipping @relation(fields: [shipping_id], references: [shipping_id])
+  payment  Payment  @relation(fields: [payment_id], references: [payment_id])
+}
+
+model Payment {
+  payment_id Int      @id @default(autoincrement())
+  method     String   @db.VarChar(50)
+  amount     Float
+  created_at DateTime
+
+  // Relationships
+  orders Order[]
+
+  User User[]
+}
+
+model Cart {
+  cart_id Int     @id @default(autoincrement())
+  user_id Int
+  quality Int
+  price   Float
+  meal_id Int
+
+  // Relationships
+  user User @relation(fields: [user_id], references: [user_id])
+  meal Meal @relation(fields: [meal_id], references: [meal_id])
+}
+
+model Shipping {
+  shipping_id   Int     @id @default(autoincrement())
+  status        Int
+  shipper_name  String  @db.VarChar(20)
+  customer_name String  @db.VarChar(20)
+  phone         String  @db.VarChar(20)
+  address       String  @db.VarChar(250)
+
+  // Relationships
+  orders Order[]
+}
