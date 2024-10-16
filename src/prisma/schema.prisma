@@ -3,103 +3,57 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql" 
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
-model User {
-  user_id   Int     @id @default(autoincrement())
-  username  String  @unique @db.VarChar(20)
-  password  String  @db.VarChar(20)
-  email     String  @unique @db.VarChar(50)
-  phone     String  @unique @db.VarChar(20)
-  first_name String @db.VarChar(20)
-  last_name  String @db.VarChar(20)
-  address    String @db.VarChar(250)
-
-  // Relationships
-  orders    Order[]
-  shops     Shop[]
-  payments  Payment[]
-  carts     Cart[]
-}
-
-model Shop {
-  shop_id      Int    @id @default(autoincrement())
-  name         String @db.VarChar(50)
-  address      String @db.VarChar(50)
-  open_time    String @db.VarChar(20)
-  close_time   String @db.VarChar(20)
-  is_available Boolean
-  user_id      Int
-  review_id    Int?
-  meal_id      Int?
-
-  // Relationships
-  user   User    @relation(fields: [user_id], references: [user_id])
-  meals  Meal?   @relation(fields: [meal_id], references: [meal_id])
-  review Review? @relation(fields: [review_id], references: [review_id])
-}
-
-model Review {
-  review_id Int    @id @default(autoincrement())
-  star      Int
-  comment   String @db.VarChar(250)
-
-  // Relationships
-  shops Shop[]
+model Cart {
+  cart_id Int   @id @default(autoincrement())
+  user_id Int?
+  quality Int
+  price   Float
+  meal_id Int?
+  Meal    Meal? @relation(fields: [meal_id], references: [meal_id], onDelete: NoAction, onUpdate: NoAction)
+  User    User? @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 model Meal {
-  meal_id  Int    @id @default(autoincrement())
-  name     String @db.VarChar(50)
+  meal_id  Int     @id @default(autoincrement())
+  name     String  @db.VarChar(50)
   price    Float
-  image    String @db.VarChar(100)
+  image    String? @db.VarChar(100)
   quantity Int
-
-  // Relationships
-  shops Shop[]
-  carts Cart[]
+  Cart     Cart[]
+  Shop     Shop[]
 }
 
 model Order {
-  order_id   Int      @id @default(autoincrement())
-  status     String   @db.VarChar(10)
-  created_at DateTime
-  updated_at DateTime
-  total      Float
-  user_id    Int
-  shipping_id Int
-  payment_id  Int
-
-  // Relationships
-  user     User     @relation(fields: [user_id], references: [user_id])
-  shipping Shipping @relation(fields: [shipping_id], references: [shipping_id])
-  payment  Payment  @relation(fields: [payment_id], references: [payment_id])
+  order_id    Int       @id @default(autoincrement())
+  status      String    @db.VarChar(10)
+  created_at  DateTime  @db.Timestamptz(6)
+  updated_at  DateTime  @db.Timestamptz(6)
+  total       Float
+  user_id     Int?
+  shipping_id Int?
+  payment_id  Int?
+  Payment     Payment?  @relation(fields: [payment_id], references: [payment_id], onDelete: NoAction, onUpdate: NoAction)
+  Shipping    Shipping? @relation(fields: [shipping_id], references: [shipping_id], onDelete: NoAction, onUpdate: NoAction)
+  User        User?     @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 model Payment {
   payment_id Int      @id @default(autoincrement())
   method     String   @db.VarChar(50)
   amount     Float
-  created_at DateTime
-
-  // Relationships
-  orders Order[]
-
-  User User[]
+  created_at DateTime @db.Timestamptz(6)
+  Order      Order[]
 }
 
-model Cart {
-  cart_id Int     @id @default(autoincrement())
-  user_id Int
-  quality Int
-  price   Float
-  meal_id Int
-
-  // Relationships
-  user User @relation(fields: [user_id], references: [user_id])
-  meal Meal @relation(fields: [meal_id], references: [meal_id])
+model Review {
+  review_id Int    @id @default(autoincrement())
+  star      Int
+  comment   String @db.VarChar(250)
+  Shop      Shop[]
 }
 
 model Shipping {
@@ -109,7 +63,37 @@ model Shipping {
   customer_name String  @db.VarChar(20)
   phone         String  @db.VarChar(20)
   address       String  @db.VarChar(250)
+  Order         Order[]
+}
 
-  // Relationships
-  orders Order[]
+model Shop {
+  shop_id      Int     @id @default(autoincrement())
+  name         String  @db.VarChar(50)
+  address      String  @db.VarChar(50)
+  open_time    String  @db.VarChar(20)
+  close_time   String  @db.VarChar(20)
+  is_available Boolean
+  user_id      Int?
+  review_id    Int?
+  meal_id      Int?
+  Meal         Meal?   @relation(fields: [meal_id], references: [meal_id], onDelete: NoAction, onUpdate: NoAction)
+  Review       Review? @relation(fields: [review_id], references: [review_id], onDelete: NoAction, onUpdate: NoAction)
+  User         User?   @relation(fields: [user_id], references: [user_id], onDelete: NoAction, onUpdate: NoAction)
+}
+
+model User {
+  user_id            Int     @id @default(autoincrement())
+  username           String  @unique @db.VarChar(20)
+  password           String  @db.VarChar(20)
+  email              String  @unique @db.VarChar(50)
+  phone              String  @unique @db.VarChar(20)
+  first_name         String  @db.VarChar(20)
+  last_name          String  @db.VarChar(20)
+  address            String  @db.VarChar(250)
+  role               String? @db.VarChar
+  refresh_token      String? @db.VarChar
+  verification_token String? @db.VarChar
+  Cart               Cart[]
+  Order              Order[]
+  Shop               Shop[]
 }

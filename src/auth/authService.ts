@@ -16,16 +16,16 @@ export class AuthService {
     async validateUser(loginData: LoginDto) {
         const { email, password } = loginData
         const user = await this.prisma.user.findFirst({
-            where: { EMAIL: email },
+            where: { email: email },
         })
         if (!user) {
             throw new UnauthorizedException('Invalid credentials')
         }
 
-        const isPasswordMatch = await bcrypt.compare(password, user.PASSWORD)
+        const isPasswordMatch = await bcrypt.compare(password, user.password)
         if (isPasswordMatch) {
             // ? collect all properties of user except password to new [result] variable
-            const { PASSWORD, ...result } = user
+            const { password, ...result } = user
             return result
         }
         return null
@@ -34,24 +34,24 @@ export class AuthService {
     async validateRefreshToken(input_refresh_token: string) {
         const token = input_refresh_token.split(' ')[1]
         const user = await this.prisma.user.findFirst({
-            where: { REFRESH_TOKEN: token },
+            where: { refresh_token: token },
         })
 
         if (user) {
-            const { PASSWORD, ...result } = user
+            const { password, ...result } = user
             return result
         }
         return null
     }
 
     async login(user: User) {
-        const payload = { email: user.EMAIL, sub: user.ID, role: user.ROLE }
+        const payload = { email: user.email, sub: user.user_id, role: user.role }
         const access_token = this.jwtService.sign(payload, { expiresIn: '5m', secret: jwtConstants.access_token_secret })
         const refresh_token = this.jwtService.sign(payload, { expiresIn: '1w', secret: jwtConstants.refresh_token_secret })
 
         await this.prisma.user.update({
-            where: { ID: user.ID },
-            data: { REFRESH_TOKEN: refresh_token },
+            where: { user_id: user.user_id },
+            data: { refresh_token: refresh_token },
         })
 
         return {
@@ -61,7 +61,7 @@ export class AuthService {
     }
 
     async resetToken(user: User) {
-        const payload = { sub: user.ID, email: user.EMAIL, role: user.ROLE }
+        const payload = { sub: user.user_id, email: user.email, role: user.role }
         const access_token = this.jwtService.sign(payload, { expiresIn: '5m', secret: jwtConstants.access_token_secret })
         return {
             access_token
